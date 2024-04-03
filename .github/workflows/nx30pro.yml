@@ -31,117 +31,100 @@ jobs:
 
     steps:
     - name: Checkout
-      uses: actions/checkout@main
+      uses: actions/checkout@v4 # Optimized to use a more specific version
 
-    - name: Initialization environment [初始化环境]
+    - name: Initialization environment
       env:
         DEBIAN_FRONTEND: noninteractive
       run: |
-        sudo rm -rf /etc/apt/sources.list.d/* /usr/share/dotnet /usr/local/lib/android /opt/ghc
+        sudo rm -rf /etc/apt/sources.list.d/* /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
+        sudo docker image prune --all --force -a
         sudo -E apt-get -qq update
         sudo -E apt-get -qq install ack antlr3 asciidoc autoconf automake autopoint binutils bison build-essential bzip2 ccache clang clangd cmake cpio curl device-tree-compiler ecj fastjar flex gawk gettext gcc-multilib g++-multilib git gperf haveged help2man intltool lib32gcc-s1 libc6-dev-i386 libelf-dev libglib2.0-dev libgmp3-dev libltdl-dev libmpc-dev libmpfr-dev libncurses5-dev libncursesw5 libncursesw5-dev libreadline-dev libssl-dev libtool lld lldb lrzsz mkisofs msmtp nano ninja-build p7zip p7zip-full patch pkgconf python2.7 python3 python3-pip python3-ply python-docutils qemu-utils re2c rsync scons squashfs-tools subversion swig texinfo uglifyjs upx-ucl unzip vim wget xmlto xxd zlib1g-dev
-        
         sudo -E apt-get -qq autoremove --purge
         sudo -E apt-get -qq clean
-        sudo -E apt-get -qq install libfuse-dev
         sudo timedatectl set-timezone "$TZ"
         sudo mkdir -p /workdir
         sudo chown $USER:$GROUPS /workdir
 
-    - name: Clone source code [克隆项目]
+    - name: Clone source code
       working-directory: /workdir
       run: |
         df -hT $PWD
-        git clone $REPO_URL -b $REPO_BRANCH immortalwrt
-        ln -sf /workdir/immortalwrt $GITHUB_WORKSPACE/immortalwrt
-        cd immortalwrt
-        useVersionInfo=$(git show -s --date=short --format="Author: %an<br/>date: %cd<br/>commit: %s<br/>commit hash: %H<br/>")
-        echo "useVersionInfo=$useVersionInfo" >> $GITHUB_ENV
+        git clone $REPO_URL -b $REPO_BRANCH openwrt
+        ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
 
-    - name: Cache
-      uses: klever1988/cachewrtbuild@main
-      with:
-        ccache: 'true'
-        prefix: ${{ github.workspace }}/immortalwrt
-        
     - name: Load custom feeds
       run: |
-        [ -e $FEEDS_CONF ] && mv $FEEDS_CONF immortalwrt/feeds.conf.default
+        [ -e $FEEDS_CONF ] && mv $FEEDS_CONF openwrt/feeds.conf.default
         chmod +x $DIY_P1_SH
-        cd immortalwrt
+        cd openwrt
         $GITHUB_WORKSPACE/$DIY_P1_SH
-        
-    - name: Update feeds [更新配置]
-      run: cd immortalwrt && ./scripts/feeds update -a
 
-    - name: Install feeds [安装配置]
-      run: cd immortalwrt && ./scripts/feeds install -a
-      
+    - name: Update feeds
+      run: cd openwrt && ./scripts/feeds update -a
+
+    - name: Install feeds
+      run: cd openwrt && ./scripts/feeds install -a
+
     - name: Load custom configuration
       run: |
-        [ -e files ] && mv files immortalwrt/files
-        [ -e $CONFIG_FILE ] && mv $CONFIG_FILE immortalwrt/.config
+        [ -e files ] && mv files openwrt/files
+        [ -e $CONFIG_FILE ] && mv $CONFIG_FILE openwrt/.config
         chmod +x $DIY_P2_SH
-        cd immortalwrt
+        cd openwrt
         $GITHUB_WORKSPACE/$DIY_P2_SH
-        
-    - name: Download package [依赖处理]
+
+    - name: Download package
       id: package
       run: |
-        cd immortalwrt
+        cd openwrt
         make defconfig
         make download -j$(nproc)
         find dl -size -1024c -exec ls -l {} \;
         find dl -size -1024c -exec rm -f {} \;
-        
-    - name: Compile the firmware  [进行编译]
+
+    - name: Compile the firmware
       id: compile
       run: |
-        cd immortalwrt
+        cd openwrt
         echo -e "$(nproc) thread compile"
-        make -j$(nproc)
-        echo "::set-output name=status::success"
+        make -j$(nproc) || make -j1 V=s
+        echo "status=success" >> $GITHUB_OUTPUT
         grep '^CONFIG_TARGET.*DEVICE.*=y' .config | sed -r 's/.*DEVICE_(.*)=y/\1/' > DEVICE_NAME
         [ -s DEVICE_NAME ] && echo "DEVICE_NAME=_$(cat DEVICE_NAME)" >> $GITHUB_ENV
         echo "FILE_DATE=_$(date +"%Y%m%d%H%M")" >> $GITHUB_ENV
-        
-    - name: Check space usage [检查磁盘状态]
-      if: steps.checkNeed.outputs.status == 'success' && (!cancelled())
+
+    - name: Check space usage
+      if: (!cancelled())
       run: df -hT
-      
-      
-    - name: Upload bin directory  [上传bin]
-      uses: actions/upload-artifact@main
+
+    - name: Upload bin directory
+      uses: actions/upload-artifact@v4 # Optimized to use a more specific version
       if: steps.compile.outputs.status == 'success' && env.UPLOAD_BIN_DIR == 'true'
       with:
         name: OpenWrt_bin${{ env.DEVICE_NAME }}${{ env.FILE_DATE }}
-        path: immortalwrt/bin
-        
-        
-        
-    - name: Organize files [文件打包]
+        path: openwrt/bin
+
+    - name: Organize files
       id: organize
-      if: steps.compile.outputs.status == 'success' && env.UPLOAD_FIRMWARE == 'true' && !cancelled()
+      if: env.UPLOAD_FIRMWARE == 'true' && !cancelled()
       run: |
-        cd $GITHUB_WORKSPACE/immortalwrt/bin/packages
-        tar -zcvf Packages.tar.gz ./*
-        cp Packages.tar.gz $GITHUB_WORKSPACE/immortalwrt/bin/targets/*/*
-        cd $GITHUB_WORKSPACE/immortalwrt/bin/targets/*/*
+        cd openwrt/bin/targets/*/*
         rm -rf packages
         echo "FIRMWARE=$PWD" >> $GITHUB_ENV
-        echo "::set-output name=status::success"
-        echo "::set-output name=release_tag::$(date +"%Y.%m.%d-%H%M")"
-        
-        
+        echo "status=success" >> $GITHUB_OUTPUT
+
     - name: Calculate MD5 [计算MD5]
       if: env.UPLOAD_RELEASE == 'true' && !cancelled()
       run: |
         cd ${{ env.FIRMWARE }} && rm -rf sha256sums
         MD5=$(md5sum * | awk '{ print $2 " " $1 }' | sed ':a;N;$!ba;s/\n/<br>/g')
         echo "MD5=$MD5" >> $GITHUB_ENV
-        
+
+
     - name: Upload firmware directory
-      uses: actions/upload-artifact@main
+      uses: actions/upload-artifact@v4 # Optimized to use a more specific version
       if: steps.organize.outputs.status == 'success' && !cancelled()
       with:
         name: OpenWrt_firmware${{ env.DEVICE_NAME }}${{ env.FILE_DATE }}
@@ -153,48 +136,27 @@ jobs:
       run: |
         echo "release_tag=$(date +"%Y.%m.%d-%H%M")" >> $GITHUB_OUTPUT
         echo "status=success" >> $GITHUB_OUTPUT
-        
-    - name: Upload OpenWrt Firmware to Release
-      id: release
-      uses: ncipollo/release-action@v1
-      if: steps.organize.outputs.status == 'success' && env.UPLOAD_RELEASE == 'true' && !cancelled()
+
+    - name: Upload firmware to release
+      uses: softprops/action-gh-release@v2 # Optimized to use a more specific version
+      if: steps.tag.outputs.status == 'success' && !cancelled()
+      env:
+        GITHUB_TOKEN: ${{ secrets.CLOUD }}
       with:
-        name: R${{ steps.organize.outputs.release_tag }} for NX30Pro
-        allowUpdates: true
-        removeArtifacts: true
-        tag: ${{ steps.organize.outputs.release_tag }}
-        commit: main
-        token: ${{ secrets.GITHUB_TOKEN }}
-        artifacts: ${{ env.FIRMWARE }}/*
+        tag_name: ${{ steps.tag.outputs.release_tag }}
         body: |
+          - 本项目是基于Hanwckf源代码编译大分区固件，使用默认配置，**适用于H3C-NX30Pro设备**，添加了第三方包只添加了[adguardhome](https://github.com/kongfl888/luci-app-adguardhome)和[openclash](https://github.com/vernesong/OpenClash/releases)，可以配合mosnds。
+          - 历史版本将自动保留在下方。
           - 默认IP：192.168.1.1
           - 默认账号：root
           - 默认密码：(空)
-          - 当前使用版本:【编译前的最后一次[➦主源码](${{ env.REPO_URL }})更新记录】
-          - 下载后请仔细校验MD5，如不正确请重新下载
-          ${{ env.useVersionInfo }}
-          
+          - 源码更新详情[点击这里查看](https://github.com/hanwckf/immortalwrt-mt798x/commits/openwrt-21.02/)
+          - mosdns[传送门](https://github.com/sbwml/luci-app-mosdns/releases)
+          - 安装mosdns时请按照v2dat_aarch64_cortex-a53.ipk、mosdns_aarch64_cortex-a53.ipk、luci-app-mosdns_all.ipk、luci-i18n-mosdns-zh-cn_all.ipk的顺序安装，未安装v2dat和mosdns前安装luci-app-mosdns会失败
+          - **请仔细检查MD5以确保完整性后再进行刷入！**
+          - 刷入前请使用237的大分区uboot[传送门](https://github.com/Axiu0823/Actions-OpenWrt/tree/main/uboot)
+          - 升级更新选择sysupgrade.bin,出厂设置请刷factory.bin。
+          - 升级前先下载备份，升级后还原备份后重新安装需要的插件即可。
           `md5信息`
           > ${{ env.MD5 }}
-          
-    - name: Delete workflow runs
-      uses: GitRML/delete-workflow-runs@main
-      with:
-        retain_days: 1
-        keep_minimum_runs: 3
-
-    - name: Remove old Releases
-      uses: dev-drprasad/delete-older-releases@v0.1.0
-      if: env.UPLOAD_RELEASE == 'true' && !cancelled()
-      with:
-        keep_latest: 3
-        delete_tags: true
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        
-        
-
-
-        
-        
-        
+        files: ${{ env.FIRMWARE }}/*
