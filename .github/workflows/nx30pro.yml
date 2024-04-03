@@ -31,7 +31,7 @@ jobs:
 
     steps:
     - name: Checkout
-      uses: actions/checkout@v4 # Optimized to use a more specific version
+      uses: actions/checkout@main
 
     - name: Initialization environment [初始化环境]
       env:
