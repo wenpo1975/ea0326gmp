@@ -30,16 +30,26 @@ jobs:
       env:
         DEBIAN_FRONTEND: noninteractive
       run: |
-        sudo rm -rf /etc/apt/sources.list.d/* /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
-        sudo docker image prune --all --force -a
-        sudo -E apt-get -qq update
-        sudo -E apt-get -qq install $(curl -fsSL https://is.gd/depends_ubuntu_2204)
-        sudo -E apt-get -qq autoremove --purge
+
         sudo -E apt-get -qq clean
         sudo timedatectl set-timezone "$TZ"
         sudo mkdir -p /workdir
         sudo chown $USER:$GROUPS /workdir
 
+    - name: 是否编译
+      id: checkNeed
+      working-directory: /workdir
+      run: |
+        cd openwrt
+        LATEST_RELEASE=`curl -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" --silent  "https://api.github.com/repos/Sereinfy/OpenWrt-NX30Pro/releases/latest" | jq -r .name`
+        if [[ "$LATEST_RELEASE" == *"${{ env.LAST_SHORT_HASH }}"* ]]; then
+          echo "already exists in the latest release, stopping compile..."
+          echo "::set-output name=status::false"
+        else
+          echo "need compile for a new release..."
+          echo "::set-output name=status::success"
+        fi
+        
     - name: 克隆源码
       working-directory: /workdir
       run: |
@@ -51,19 +61,7 @@ jobs:
         echo "useVersionInfo=$useVersionInfo" >> $GITHUB_ENV
         echo "LAST_SHORT_HASH=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
         
-    - name: 是否编译
-      id: checkNeed
-      working-directory: /workdir
-      run: |
-        cd openwrt
-        LATEST_RELEASE=`curl -H "Authorization: token ${{ secrets.GH_TOKEN }}" --silent  "https://api.github.com/repos/Sereinfy/OpenWrt-NX30Pro/releases/latest" | jq -r .name`
-        if [[ "$LATEST_RELEASE" == *"${{ env.LAST_SHORT_HASH }}"* ]]; then
-          echo "already exists in the latest release, stopping compile..."
-          echo "::set-output name=status::false"
-        else
-          echo "need compile for a new release..."
-          echo "::set-output name=status::success"
-        fi
+
           
     - name: 前置设置
       run: |
