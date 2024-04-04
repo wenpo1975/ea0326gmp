@@ -10,7 +10,7 @@ CLASH_DEV_URL="https://raw.githubusercontent.com/vernesong/OpenClash/core/master
 CLASH_TUN_VERSION=$(curl -sL https://github.com/vernesong/OpenClash/raw/core/master/core_version | head -n 2 | tail -n 1)
 CLASH_TUN_URL="https://raw.githubusercontent.com/vernesong/OpenClash/core/master/premium/clash-linux-arm64-$CLASH_TUN_VERSION.gz"
 
-# meta核
+# meta内核
 
 CLASH_META_URL="https://raw.githubusercontent.com/vernesong/OpenClash/core/master/meta/clash-linux-arm64.tar.gz"
 # 下载clash内核
