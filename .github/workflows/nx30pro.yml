@@ -1,21 +1,21 @@
-name: Build immortalwrt
+name: science_cloud-build
 
 on:
   repository_dispatch:
   workflow_dispatch:
-    
+
 env:
   REPO_URL: https://github.com/hanwckf/immortalwrt-mt798x
-  REPO_BRANCH: immortalwrt-21.02
+  REPO_BRANCH: openwrt-21.02
   FEEDS_CONF: feeds.conf.default
   CONFIG_FILE: .config
-  DIY_P1_SH:  diy-part1.sh
-  DIY_P2_SH:  diy-part2.sh
+  DIY_P1_SH: diy-part1.sh
+  DIY_P2_SH: diy-part2.sh
   UPLOAD_BIN_DIR: true
   UPLOAD_FIRMWARE: true
   UPLOAD_RELEASE: true
   TZ: Asia/Shanghai
-  
+
 jobs:
   build:
     runs-on: ubuntu-20.04
@@ -151,3 +151,21 @@ jobs:
           `md5信息`
           > ${{ env.MD5 }}
         files: ${{ env.FIRMWARE }}/*
+          
+
+
+
+    - name: Delete workflow runs
+      uses: Mattraks/delete-workflow-runs@v2 # Optimized to use a more specific version
+      with:
+        retain_days: 0
+        keep_minimum_runs: 2
+
+#    - name: Remove old Releases
+#      uses: dev-drprasad/delete-older-releases@v0.3.3 # Optimized to use a more specific version
+#      if: env.UPLOAD_RELEASE == 'true' && !cancelled()
+#      with:
+#        keep_latest: 3
+#        delete_tags: true
+#      env:
+#        GITHUB_TOKEN: ${{ secrets.CLOUD }}
