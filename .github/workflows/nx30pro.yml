@@ -187,3 +187,14 @@ jobs:
       with:
         retain_days: 1
         keep_minimum_runs: 3
+        
+    - name: Update latest tag
+      if: steps.checkNeed.outputs.status == 'success'
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git pull --unshallow
+        git tag -f latest ${{ steps.release_tag.outputs.date_prefix }}-${{ env.LAST_SHORT_HASH }}
+        git push origin --tags -f
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
