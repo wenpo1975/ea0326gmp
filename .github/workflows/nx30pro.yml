@@ -195,9 +195,8 @@ jobs:
 
 
     - name: Delete workflow runs
-      if: steps.checkNeed.outputs.status == 'success'
       uses: Mattraks/delete-workflow-runs@v2 # Optimized to use a more specific version
       with:
-        retain_days: 1
+        retain_days: 0
         keep_minimum_runs: 3
         
