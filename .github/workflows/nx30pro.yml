@@ -1,17 +1,8 @@
-# https://github.com/P3TERX/Actions-OpenWrt
-
 name: Build immortalwrt
 
 on:
   repository_dispatch:
   workflow_dispatch:
-    inputs:
-      ssh:
-        description: 'SSH connection to Actions'
-        required: false
-        default: 'false'
-  watch:
-    types: [started]
     
 env:
   REPO_URL: https://github.com/hanwckf/immortalwrt-mt798x
