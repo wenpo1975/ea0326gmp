@@ -11,6 +11,7 @@ env:
   CONFIG_FILE: .config
   DIY_P1_SH: diy-part1.sh
   DIY_P2_SH: diy-part2.sh
+  CLASH_CORE: clash-core.sh
   UPLOAD_BIN_DIR: true
   UPLOAD_FIRMWARE: true
   UPLOAD_RELEASE: true
@@ -85,6 +86,12 @@ jobs:
         cd openwrt
         $GITHUB_WORKSPACE/$DIY_P2_SH
 
+    - name: clash core Download
+      run: |
+        [ -e files ] && mv files openwrt/files
+        cd openwrt
+        chmod +x $GITHUB_WORKSPACE/$CLASH_CORE && $GITHUB_WORKSPACE/$CLASH_CORE
+        
     - name: Download package
       id: package
       run: |
@@ -122,8 +129,10 @@ jobs:
       run: |
         cd openwrt/bin/targets/*/*
         rm -rf packages
+        find . -type f ! -name '*.bin' -exec rm -f {} \;
         echo "FIRMWARE=$PWD" >> $GITHUB_ENV
-        echo "status=success" >> $GITHUB_OUTPUT
+        echo "::set-output name=status::success"
+        echo "::set-output name=release_tag::$(date +"%Y-%m-%d %H%M")"
 
     - name: Calculate MD5 [计算MD5]
       if: env.UPLOAD_RELEASE == 'true' && !cancelled()
