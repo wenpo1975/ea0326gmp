@@ -66,6 +66,7 @@ jobs:
         fi
           
     - name: 前置设置
+      if: steps.checkNeed.outputs.status == 'success'
       run: |
         [ -e $FEEDS_CONF ] && mv $FEEDS_CONF openwrt/feeds.conf.default
         chmod +x $DIY_P1_SH
@@ -73,12 +74,15 @@ jobs:
         $GITHUB_WORKSPACE/$DIY_P1_SH
 
     - name: Update feeds
+      if: steps.checkNeed.outputs.status == 'success'
       run: cd openwrt && ./scripts/feeds update -a
 
     - name: Install feeds
+      if: steps.checkNeed.outputs.status == 'success'
       run: cd openwrt && ./scripts/feeds install -a
 
     - name: 后置设置
+      if: steps.checkNeed.outputs.status == 'success'
       run: |
         [ -e files ] && mv files openwrt/files
         [ -e $CONFIG_FILE ] && mv $CONFIG_FILE openwrt/.config
@@ -87,12 +91,14 @@ jobs:
         $GITHUB_WORKSPACE/$DIY_P2_SH
 
     - name: clash core Download
+      if: steps.checkNeed.outputs.status == 'success'
       run: |
         [ -e files ] && mv files openwrt/files
         cd openwrt
         chmod +x $GITHUB_WORKSPACE/$CLASH_CORE && $GITHUB_WORKSPACE/$CLASH_CORE
         
     - name: Download package
+      if: steps.checkNeed.outputs.status == 'success'
       id: package
       run: |
         cd openwrt
@@ -102,6 +108,7 @@ jobs:
         find dl -size -1024c -exec rm -f {} \;
 
     - name: 编译源码
+      if: steps.checkNeed.outputs.status == 'success'
       id: compile
       run: |
         cd openwrt
@@ -113,19 +120,19 @@ jobs:
         echo "FILE_DATE=_$(date +"%Y%m%d%H%M")" >> $GITHUB_ENV
 
     - name: 磁盘状态
-      if: (!cancelled())
+      if: steps.checkNeed.outputs.status == 'success' && (!cancelled())
       run: df -hT
 
     - name: Upload bin directory
       uses: actions/upload-artifact@v4 # Optimized to use a more specific version
-      if: steps.compile.outputs.status == 'success' && env.UPLOAD_BIN_DIR == 'true'
+      if: if: steps.checkNeed.outputs.status == 'success' && steps.compile.outputs.status == 'success' && env.UPLOAD_BIN_DIR == 'true'
       with:
         name: OpenWrt_bin${{ env.DEVICE_NAME }}${{ env.FILE_DATE }}
         path: openwrt/bin
 
     - name: Organize files
       id: organize
-      if: env.UPLOAD_FIRMWARE == 'true' && !cancelled()
+      if: steps.checkNeed.outputs.status == 'success' && env.UPLOAD_FIRMWARE == 'true' && !cancelled()
       run: |
         cd openwrt/bin/targets/*/*
         rm -rf packages
@@ -135,7 +142,7 @@ jobs:
         echo "::set-output name=release_tag::$(date +"%Y-%m-%d %H%M")"
 
     - name: Calculate MD5 [计算MD5]
-      if: env.UPLOAD_RELEASE == 'true' && !cancelled()
+      if: steps.checkNeed.outputs.status == 'success'
       run: |
         cd ${{ env.FIRMWARE }} && rm -rf sha256sums
         MD5=$(md5sum * | awk '{ print $2 " " $1 }' | sed ':a;N;$!ba;s/\n/<br>/g')
@@ -144,7 +151,7 @@ jobs:
 
     - name: Upload firmware directory
       uses: actions/upload-artifact@v4 # Optimized to use a more specific version
-      if: steps.organize.outputs.status == 'success' && !cancelled()
+      if: steps.checkNeed.outputs.status == 'success' && steps.organize.outputs.status == 'success' && !cancelled()
       with:
         name: OpenWrt_firmware${{ env.DEVICE_NAME }}${{ env.FILE_DATE }}
         path: ${{ env.FIRMWARE }}
@@ -160,7 +167,7 @@ jobs:
     - name: Upload OpenWrt Firmware to Release
       id: release
       uses: ncipollo/release-action@main
-      if: steps.organize.outputs.status == 'success' && env.UPLOAD_RELEASE == 'true' && !cancelled()
+      if: steps.checkNeed.outputs.status == 'success' && steps.organize.outputs.status == 'success' && env.UPLOAD_RELEASE == 'true' && !cancelled()
       with:
         name: ${{ steps.organize.outputs.release_tag }}-${{ env.LAST_SHORT_HASH }}
         allowUpdates: true
@@ -185,7 +192,19 @@ jobs:
 
 
     - name: Delete workflow runs
+      if: steps.checkNeed.outputs.status == 'success'
       uses: Mattraks/delete-workflow-runs@v2 # Optimized to use a more specific version
       with:
         retain_days: 1
         keep_minimum_runs: 3
+        
+    - name: Update latest tag
+      if: steps.checkNeed.outputs.status == 'success'
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git pull --unshallow
+        git tag -f latest ${{ steps.release_tag.outputs.date_prefix }}-${{ env.LAST_SHORT_HASH }}
+        git push origin --tags -f
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
