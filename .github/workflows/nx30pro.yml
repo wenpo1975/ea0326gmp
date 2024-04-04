@@ -1,4 +1,4 @@
-name: science_cloud-build
+name: openwrt_cloud-build
 
 on:
   repository_dispatch:
