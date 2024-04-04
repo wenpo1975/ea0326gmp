@@ -34,6 +34,8 @@ rm -rf feeds/packages/net/mosdns
 rm -rf feeds/packages/net/v2ray-geodata
 rm -rf package/feeds/packages/mosdns
 rm -rf package/feeds/packages/v2ray-geodata
+rm -rf feeds/luci/applications
+#rm -rf package/feeds/luci
 
 git clone https://github.com/sbwml/luci-app-mosdns -b v5 package/mosdns
 git clone https://github.com/sbwml/v2ray-geodata package/v2ray-geodata
