@@ -29,7 +29,7 @@ mkdir -p files/etc/openclash/core
 GEOIP_LITE_asn="https://raw.githubusercontent.com/Loyalsoldier/geoip/release/geoip-asn.dat"
 
 # meta 要GeoIP.dat 和 GeoSite.dat
-GEOIP_LITE_URL="https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geoip.dat"
+GEOIP_LITE_URL="https://raw.githubusercontent.com/Loyalsoldier/geoip/release/geoip-only-cn-private.dat"
 GEOSITE_LITE_URL="https://github.com/Loyalsoldier/domain-list-custom/releases/latest/download/geosite.dat"
 
 # Country.mmdb
