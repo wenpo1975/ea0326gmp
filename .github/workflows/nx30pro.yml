@@ -182,8 +182,9 @@ jobs:
         body: |
           - 本项目是基于Hanwckf源代码编译的固件，**适用于H3C-NX30Pro设备**
           - 内置openclash、mosdns
-          - 预置~~openclash dev内核，TUN内核，meta内核~~ 给了权限也不行，去掉了
-            预置~~GeoIP.dat~~，GeoSite.dat，Country.mmdb
+          - 预置geoip.dat、Country.mmdb 精简版只包含 `geoip:cn` 和 `geoip:private`
+            预置geosite.dat Loyalsoldier自定义版，可代替官方 geosite.dat
+            预置geoip-asn.dat 只包含新增类别，不包含CN
           - 默认IP：192.168.10.1
           - 默认账号：root
           - 默认密码：(空)
