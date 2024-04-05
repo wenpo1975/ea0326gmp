@@ -24,17 +24,18 @@ mkdir -p files/etc/openclash/core
 # sed -i '7s/$/\n333/' '/etc/openclash/custom/openclash_custom_firewall_rules.sh' 方案3 失败
 
 
-# 自用的特殊版本，想用GEOIP_CN 用下面命令删除
+# 自用的特殊版本，只包含新增类别
 # rm -rf /etc/openclash/GeoIP.dat
 GEOIP_LITE_asn="https://raw.githubusercontent.com/Loyalsoldier/geoip/release/geoip-asn.dat"
 
 # meta 要GeoIP.dat 和 GeoSite.dat
-#GEOIP_LITE_URL="https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geoip.dat"
+GEOIP_LITE_URL="https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geoip.dat"
 GEOSITE_LITE_URL="https://github.com/Loyalsoldier/domain-list-custom/releases/latest/download/geosite.dat"
 
 # Country.mmdb
 COUNTRY_LITE_URL="https://raw.githubusercontent.com/Loyalsoldier/geoip/release/Country-only-cn-private.mmdb"
 
-wget -qO- $GEOIP_LITE_asn > files/etc/openclash/GeoIP.dat
-wget -qO- $GEOIP_LITE_URL > files/etc/openclash/GeoSite.dat
+wget -qO- $GEOIP_LITE_asn > files/etc/openclash/geoip-asn.dat
+wget -qO- $GEOIP_LITE_URL > files/etc/openclash/geoip.dat
+wget -qO- $GEOSITE_LITE_URL > files/etc/openclash/GeoSite.dat
 wget -qO- $COUNTRY_LITE_URL > files/etc/openclash/Country.mmdb
