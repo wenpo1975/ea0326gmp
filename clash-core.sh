@@ -24,18 +24,14 @@ mkdir -p files/etc/openclash/core
 # sed -i '7s/$/\n333/' '/etc/openclash/custom/openclash_custom_firewall_rules.sh' 方案3 失败
 
 
-# 自用的特殊版本，只包含新增类别
-# rm -rf /etc/openclash/GeoIP.dat
-GEOIP_LITE_asn="https://raw.githubusercontent.com/Loyalsoldier/geoip/release/geoip-asn.dat"
 
+# 自用的特殊版本
 # meta 要GeoIP.dat 和 GeoSite.dat
-GEOIP_LITE_URL="https://raw.githubusercontent.com/Loyalsoldier/geoip/release/geoip-only-cn-private.dat"
+GEOIP_LITE_URL="https://raw.githubusercontent.com/Sereinfy/geoip/release/GeoIP.dat"
 GEOSITE_LITE_URL="https://github.com/Loyalsoldier/domain-list-custom/releases/latest/download/geosite.dat"
-
 # Country.mmdb
 COUNTRY_LITE_URL="https://raw.githubusercontent.com/Loyalsoldier/geoip/release/Country-only-cn-private.mmdb"
 
-wget -qO- $GEOIP_LITE_asn > files/etc/openclash/geoip-asn.dat
 wget -qO- $GEOIP_LITE_URL > files/etc/openclash/geoip.dat
 wget -qO- $GEOSITE_LITE_URL > files/etc/openclash/GeoSite.dat
 wget -qO- $COUNTRY_LITE_URL > files/etc/openclash/Country.mmdb
