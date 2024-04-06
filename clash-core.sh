@@ -1,6 +1,6 @@
 # 预置openclash内核
 mkdir -p files/etc/openclash/core
-
+[ -f files/etc/crontabs/root ] || mkdir -p files/etc/crontabs && touch files/etc/crontabs/root
 
 # openclash 的 dev内核
 #CLASH_DEV_URL="https://raw.githubusercontent.com/vernesong/OpenClash/core/master/dev/clash-linux-arm64.tar.gz"
