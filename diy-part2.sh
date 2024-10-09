@@ -42,6 +42,8 @@ rm -rf package/feeds/luci/luci-app-openclash
 
 git clone https://github.com/sbwml/luci-app-mosdns -b v5 package/mosdns
 git clone https://github.com/sbwml/v2ray-geodata package/v2ray-geodata
-#git clone https://github.com/sbwml/v2ray-geodata feeds/packages/net/v2ray-geodata
-git clone --depth=1 https://github.com/vernesong/OpenClash.git package/luci-app-openclash
+
+# git clone --depth=1 https://github.com/vernesong/OpenClash.git package/luci-app-openclash
+git clone https://github.com/morytyann/OpenWrt-mihomo package/OpenWrt-mihomo
+
 
