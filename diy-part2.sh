@@ -27,21 +27,21 @@ sed -i 's/luci-theme-bootstrap/luci-theme-argon/g' feeds/luci/collections/luci/M
 #sed -i "s/OpenWrt /Kinoko build $(TZ=UTC-8 date "+%Y.%m.%d") @ OpenWrt /g" package/lean/default-settings/files/zzz-default-settings
 # 安装前置 mosdns 5.3.1
 rm -rf feeds/packages/lang/golang
-git clone https://github.com/sbwml/packages_lang_golang -b 22.x feeds/packages/lang/golang
+git clone https://github.com/sbwml/packages_lang_golang -b 21.x feeds/packages/lang/golang
 
 #rm -rf feeds/packages/lang/golang
 #git clone https://github.com/sbwml/packages_lang_golang -b 23.x feeds/packages/lang/golang
 # 删除冲突
 
-rm -rf feeds/packages/net/mosdns
-rm -rf feeds/packages/net/v2ray-geodata
-rm -rf package/feeds/packages/mosdns
-rm -rf package/feeds/packages/v2ray-geodata
-rm -rf feeds/luci/applications/luci-app-openclash
-rm -rf package/feeds/luci/luci-app-openclash
+#rm -rf feeds/packages/net/mosdns
+#rm -rf feeds/packages/net/v2ray-geodata
+#rm -rf package/feeds/packages/mosdns
+#rm -rf package/feeds/packages/v2ray-geodata
+#rm -rf feeds/luci/applications/luci-app-openclash
+#rm -rf package/feeds/luci/luci-app-openclash
 
-git clone https://github.com/sbwml/luci-app-mosdns -b v5 package/mosdns
-git clone https://github.com/sbwml/v2ray-geodata package/v2ray-geodata
+#git clone https://github.com/sbwml/luci-app-mosdns -b v5 package/mosdns
+#git clone https://github.com/sbwml/v2ray-geodata package/v2ray-geodata
 
 # git clone --depth=1 https://github.com/vernesong/OpenClash.git package/luci-app-openclash
 
